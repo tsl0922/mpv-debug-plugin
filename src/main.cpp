@@ -14,6 +14,7 @@
 #include <mpv/client.h>
 #include "debug.h"
 
+std::thread thread;
 static mpv_handle* mpv = nullptr;
 static GLFWwindow* window = nullptr;
 static Debug* debug = nullptr;
@@ -120,7 +121,7 @@ static int gui_thread() {
 
 static void show_debug() {
     if (!window) {
-        std::thread(gui_thread).detach();
+        thread = std::thread(gui_thread);
     } else {
         debug->show();
         glfwPostEmptyEvent();
@@ -162,7 +163,11 @@ extern "C" MPV_EXPORT int mpv_open_cplugin(mpv_handle* handle) {
         }
     }
 
-    if (window) glfwSetWindowShouldClose(window, GLFW_TRUE);
+    if (window) {
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+        glfwPostEmptyEvent();
+    }
+    if (thread.joinable()) thread.join();
 
     delete debug;
 
