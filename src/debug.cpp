@@ -18,6 +18,11 @@ Debug::Debug(mpv_handle* mpv) {
 
 Debug::~Debug() { delete console; }
 
+void Debug::show() {
+    m_open = true;
+    initData();
+}
+
 void Debug::draw() {
     if (!m_open) return;
     ImGui::SetNextWindowSizeConstraints(ImVec2(scaled(25), scaled(30)), ImVec2(FLT_MAX, FLT_MAX));

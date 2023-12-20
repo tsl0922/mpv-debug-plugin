@@ -14,7 +14,7 @@ class Debug {
     ~Debug();
 
     void draw();
-    void show() { m_open = true; }
+    void show();
     void AddLog(const char *prefix, const char *level, const char *text);
 
    private:

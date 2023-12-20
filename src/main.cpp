@@ -14,15 +14,15 @@
 #include <mpv/client.h>
 #include "debug.h"
 
-static mpv_handle* mpv = NULL;
-static Debug* debug = NULL;
+static mpv_handle* mpv = nullptr;
+static GLFWwindow* window = nullptr;
+static Debug* debug = nullptr;
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-static int gui_thread(void* data) {
-    mpv_handle* mpv = (mpv_handle*)data;
+static int gui_thread() {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) return 1;
 
@@ -44,7 +44,7 @@ static int gui_thread(void* data) {
 #endif
     glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 
-    GLFWwindow* window = glfwCreateWindow(400, 600, "Debug", nullptr, nullptr);
+    window = glfwCreateWindow(400, 600, "Debug", nullptr, nullptr);
     if (window == nullptr) return 1;
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -73,7 +73,6 @@ static int gui_thread(void* data) {
     font_cfg.SizePixels = 13 * scale;
     io.Fonts->AddFontDefault(&font_cfg);
 
-    debug = new Debug(mpv);
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     while (!glfwWindowShouldClose(window)) {
@@ -107,8 +106,6 @@ static int gui_thread(void* data) {
         glfwSwapBuffers(window);
     }
 
-    delete debug;
-
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
@@ -116,12 +113,14 @@ static int gui_thread(void* data) {
     glfwDestroyWindow(window);
     glfwTerminate();
 
+    window = nullptr;
+
     return 0;
 }
 
 static void show_debug() {
-    if (!debug) {
-        std::thread(gui_thread, mpv).detach();
+    if (!window) {
+        std::thread(gui_thread).detach();
     } else {
         debug->show();
         glfwPostEmptyEvent();
@@ -138,14 +137,14 @@ static void handle_client_message(mpv_event* event) {
 
 static void handle_log_message(mpv_event* event) {
     mpv_event_log_message* msg = (mpv_event_log_message*)event->data;
-    if (debug) {
-        debug->AddLog(msg->prefix, msg->level, msg->text);
-        glfwPostEmptyEvent();
-    }
+
+    debug->AddLog(msg->prefix, msg->level, msg->text);
+    if (window) glfwPostEmptyEvent();
 }
 
 extern "C" MPV_EXPORT int mpv_open_cplugin(mpv_handle* handle) {
     mpv = handle;
+    debug = new Debug(mpv);
 
     while (mpv) {
         mpv_event* event = mpv_wait_event(mpv, -1);
@@ -162,6 +161,10 @@ extern "C" MPV_EXPORT int mpv_open_cplugin(mpv_handle* handle) {
                 break;
         }
     }
+
+    if (window) glfwSetWindowShouldClose(window, GLFW_TRUE);
+
+    delete debug;
 
     return 0;
 }
