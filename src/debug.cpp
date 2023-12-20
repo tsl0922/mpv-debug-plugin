@@ -128,16 +128,19 @@ void Debug::initData() {
     version = mpv_get_property_string(mpv, "mpv-version");
 
     mpv_node node;
+    memset(&node, 0, sizeof(node));
     mpv_get_property(mpv, "options", MPV_FORMAT_NODE, &node);
     options.clear();
     for (int i = 0; i < node.u.list->num; i++) options.push_back(node.u.list->values[i].u.string);
     mpv_free_node_contents(&node);
 
+    memset(&node, 0, sizeof(node));
     mpv_get_property(mpv, "property-list", MPV_FORMAT_NODE, &node);
     properties.clear();
     for (int i = 0; i < node.u.list->num; i++) properties.push_back(node.u.list->values[i].u.string);
     mpv_free_node_contents(&node);
 
+    memset(&node, 0, sizeof(node));
     mpv_get_property(mpv, "input-bindings", MPV_FORMAT_NODE, &node);
     bindings.clear();
     for (int i = 0; i < node.u.list->num; i++) {
@@ -158,6 +161,7 @@ void Debug::initData() {
     }
     mpv_free_node_contents(&node);
 
+    memset(&node, 0, sizeof(node));
     mpv_get_property(mpv, "command-list", MPV_FORMAT_NODE, &node);
     commands.clear();
     formatCommands(node, commands);
@@ -241,7 +245,7 @@ void Debug::drawProperties(const char* title, std::vector<std::string>& props) {
                 ImGui::BulletText("%s", name.c_str());
                 continue;
             }
-            mpv_node prop;
+            mpv_node prop{0};
             mpv_get_property(mpv, name.c_str(), MPV_FORMAT_NODE, &prop);
             if (format & 1 << prop.format) drawPropNode(name.c_str(), prop);
             mpv_free_node_contents(&prop);
@@ -256,10 +260,6 @@ void Debug::drawPropNode(const char* name, mpv_node& node, int depth) {
         auto style = ImGuiStyle();
         ImVec4 color = style.Colors[ImGuiCol_CheckMark];
         switch (prop.format) {
-            case MPV_FORMAT_NONE:
-                value = "<Empty>";
-                color = style.Colors[ImGuiCol_TextDisabled];
-                break;
             case MPV_FORMAT_OSD_STRING:
             case MPV_FORMAT_STRING:
                 value = prop.u.string;
@@ -276,8 +276,9 @@ void Debug::drawPropNode(const char* name, mpv_node& node, int depth) {
             case MPV_FORMAT_BYTE_ARRAY:
                 value = fmt::format("byte array [{}]", prop.u.ba->size);
                 break;
+            case MPV_FORMAT_NONE:
             default:
-                value = "<Unavailable>";
+                value = "<Empty>";
                 color = style.Colors[ImGuiCol_TextDisabled];
                 break;
         }
@@ -485,7 +486,7 @@ void Debug::Console::ExecCommand(const char* command_line) {
         AddLog("info", "Builtin Commands:");
         for (auto& cmd : builtinCommands) AddLog("info", "- %s", cmd.c_str());
         AddLog("info", "MPV Commands:");
-        mpv_node node;
+        mpv_node node{0};
         mpv_get_property(mpv, "command-list", MPV_FORMAT_NODE, &node);
         std::vector<std::pair<std::string, std::string>> commands;
         formatCommands(node, commands);
