@@ -4,6 +4,8 @@ a debug tool for mpv, based on the [C PLUGINS](https://mpv.io/manual/master/#c-p
 
 ![screenshot](screenshot/debug.jpg)
 
+See also [mpv-menu-plugin](https://github.com/tsl0922/mpv-menu-plugin).
+
 ## Features
 
 - Visual view of mpv's internal properties
