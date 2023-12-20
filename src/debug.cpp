@@ -392,10 +392,6 @@ ImVec4 Debug::Console::LogColor(const char* level) {
 }
 
 void Debug::Console::draw() {
-    ImGui::BeginDisabled();
-    ImGui::TextUnformatted("Enter 'HELP' for help, 'TAB' for completion, 'Up/Down' for command history.");
-    ImGui::EndDisabled();
-
     if (ImGui::BeginPopup("Log Level")) {
         const char* items[] = {"fatal", "error", "warn", "info", "v", "debug", "trace", "no"};
         static std::string level = LogLevel;
@@ -453,7 +449,7 @@ void Debug::Console::draw() {
     ImGuiInputTextFlags input_text_flags = ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_EscapeClearsAll |
                                            ImGuiInputTextFlags_CallbackCompletion | ImGuiInputTextFlags_CallbackHistory;
     if (ImGui::InputTextWithHint(
-            "Input", "press ENTER to execute", InputBuf, IM_ARRAYSIZE(InputBuf), input_text_flags,
+            "Command", "press ENTER to execute", InputBuf, IM_ARRAYSIZE(InputBuf), input_text_flags,
             [](ImGuiInputTextCallbackData* data) {
                 Console* console = (Console*)data->UserData;
                 return console->TextEditCallback(data);
@@ -468,6 +464,15 @@ void Debug::Console::draw() {
 
     ImGui::SetItemDefaultFocus();
     if (reclaim_focus) ImGui::SetKeyboardFocusHere(-1);  // Auto focus previous widget
+
+    ImGui::SameLine();
+    ImGui::TextDisabled("(?)");
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_DelayShort) && ImGui::BeginTooltip()) {
+        ImGui::PushTextWrapPos(35 * ImGui::GetFontSize());
+        ImGui::TextUnformatted("Enter 'HELP' for help, 'TAB' for completion, 'Up/Down' for command history.");
+        ImGui::PopTextWrapPos();
+        ImGui::EndTooltip();
+    }
 }
 
 void Debug::Console::ExecCommand(const char* command_line) {
