@@ -26,3 +26,13 @@ Add a keybinding to show debug window (required):
 ```
 ` script-message-to debug show
 ```
+
+# Credits
+
+- [fmt](https://fmt.dev): A modern formatting library
+- [imgui](https://github.com/ocornut/imgui): Bloat-free Graphical User interface for C++ with minimal dependencies
+- [ImPlay](https://github.com/tsl0922/ImPlay): This debug tool was extracted from ImPlay
+
+# License
+
+[GPLv2](LICENSE.txt).

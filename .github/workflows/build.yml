@@ -54,6 +54,5 @@ jobs:
           tag: dev
           artifacts: "debug.zip"
           allowUpdates: true
-          prerelease: true
-          name: Dev build
-          body: Development build
+          name: Latest build
+          body: Latest build
