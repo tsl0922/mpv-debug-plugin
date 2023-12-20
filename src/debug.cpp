@@ -273,8 +273,11 @@ void Debug::drawPropNode(const char* name, mpv_node& node, int depth) {
             case MPV_FORMAT_DOUBLE:
                 value = fmt::format("{}", prop.u.double_);
                 break;
+            case MPV_FORMAT_BYTE_ARRAY:
+                value = fmt::format("byte array [{}]", prop.u.ba->size);
+                break;
             default:
-                value = fmt::format("Unknown format: {}", (int)prop.format);
+                value = "<Unavailable>";
                 color = style.Colors[ImGuiCol_TextDisabled];
                 break;
         }
@@ -297,14 +300,6 @@ void Debug::drawPropNode(const char* name, mpv_node& node, int depth) {
     };
 
     switch (node.format) {
-        case MPV_FORMAT_NONE:
-        case MPV_FORMAT_STRING:
-        case MPV_FORMAT_OSD_STRING:
-        case MPV_FORMAT_FLAG:
-        case MPV_FORMAT_INT64:
-        case MPV_FORMAT_DOUBLE:
-            drawSimple(name, node);
-            break;
         case MPV_FORMAT_NODE_ARRAY:
             if (ImGui::TreeNode(fmt::format("{} [{}]", name, node.u.list->num).c_str())) {
                 for (int i = 0; i < node.u.list->num; i++)
@@ -319,11 +314,8 @@ void Debug::drawPropNode(const char* name, mpv_node& node, int depth) {
                 ImGui::TreePop();
             }
             break;
-        case MPV_FORMAT_BYTE_ARRAY:
-            ImGui::BulletText("byte array [%ld]", node.u.ba->size);
-            break;
         default:
-            ImGui::BulletText("Unknown format: %d", node.format);
+            drawSimple(name, node);
             break;
     }
 }
