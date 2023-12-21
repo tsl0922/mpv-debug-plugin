@@ -7,37 +7,61 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  win:
     runs-on: windows-2019
+    name: Windows
     steps:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: mingw64
+          msystem: clang64
           install: >-
             base-devel
             git
-            mingw-w64-x86_64-gcc
-            mingw-w64-x86_64-cmake
-            mingw-w64-x86_64-ninja
-            mingw-w64-x86_64-glfw
-            mingw-w64-x86_64-mpv
+            mingw-w64-clang-x86_64-clang
+            mingw-w64-clang-x86_64-cmake
+            mingw-w64-clang-x86_64-ninja
+            mingw-w64-clang-x86_64-mpv
           update: true
       - name: Build
         shell: msys2 {0}
         run: |
           mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=RELEASE -G Ninja ..
+          cmake -DCMAKE_BUILD_TYPE=RELEASE \
+            -DCMAKE_SHARED_LINKER_FLAGS="-static" \
+            -G Ninja ..
           cmake --build .
       - uses: actions/upload-artifact@v3
         with:
           name: debug
           path: build/debug.dll
+  linux:
+    runs-on: ubuntu-22.04
+    name: Linux
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install dependencies
+        run: |
+          sudo add-apt-repository universe
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake ninja-build git pkg-config libmpv-dev xorg-dev
+      - name: Build
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=RELEASE \
+            -G Ninja ..
+          cmake --build .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: debug
+          path: build/debug.so
   publish:
-    needs: build
-    runs-on: ubuntu-latest
+    needs: [win, linux]
+    runs-on: ubuntu-22.04
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v3

@@ -1,14 +1,16 @@
 // Copyright (c) 2023 tsl0922. All rights reserved.
 // SPDX-License-Identifier: GPL-2.0-only
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+#include <imgui_impl_opengl3_loader.h>
 #include <stdio.h>
 #include <thread>
 #include <GLFW/glfw3.h>
 #include <mpv/client.h>
 #include "debug.h"
+#include "main.h"
 
 std::thread thread;
 static mpv_handle* mpv = nullptr;
@@ -45,7 +47,6 @@ static int gui_thread() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
-    io.ConfigWindowsMoveFromTitleBarOnly = true;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -132,7 +133,7 @@ static void handle_log_message(mpv_event* event) {
     if (window) glfwPostEmptyEvent();
 }
 
-extern "C" MPV_EXPORT int mpv_open_cplugin(mpv_handle* handle) {
+int mpv_open_cplugin(mpv_handle* handle) {
     mpv = handle;
     debug = new Debug(mpv);
 
