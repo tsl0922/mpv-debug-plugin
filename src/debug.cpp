@@ -7,8 +7,6 @@
 #include <imgui_internal.h>
 #include "debug.h"
 
-inline float scaled(float n) { return n * ImGui::GetFontSize(); }
-
 Debug::Debug(mpv_handle* mpv) {
     this->mpv = mpv;
     console = new Console(mpv);
@@ -25,8 +23,8 @@ void Debug::show() {
 
 void Debug::draw() {
     if (!m_open) return;
-    ImGui::SetNextWindowSizeConstraints(ImVec2(scaled(25), scaled(30)), ImVec2(FLT_MAX, FLT_MAX));
-    ImGui::SetNextWindowSize(ImVec2(scaled(40), scaled(60)), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImGui::EmVec2(25, 30), ImVec2(FLT_MAX, FLT_MAX));
+    ImGui::SetNextWindowSize(ImGui::EmVec2(40, 60), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowPos(ImGui::GetMainViewport()->WorkPos, ImGuiCond_FirstUseEver);
     if (ImGui::Begin("Debug", &m_open, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar)) {
         drawHeader();
@@ -397,9 +395,9 @@ void Debug::Console::draw() {
         ImGui::EndPopup();
     }
 
-    Filter.Draw(fmt::format("{}##log", "Filter").c_str(), scaled(8));
+    Filter.Draw(fmt::format("{}##log", "Filter").c_str(), ImGui::EmSize(8));
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(scaled(3));
+    ImGui::SetNextItemWidth(ImGui::EmSize(3));
     ImGui::InputInt("Lines", &LogLimit, 0);
     ImGui::SameLine();
     ImGui::Text("(%d/%d)", Items.Size, LogLimit);

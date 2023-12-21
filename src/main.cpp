@@ -6,10 +6,6 @@
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 #include <thread>
-#define GL_SILENCE_DEPRECATION
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-#include <GLES2/gl2.h>
-#endif
 #include <GLFW/glfw3.h>
 #include <mpv/client.h>
 #include "debug.h"
@@ -27,12 +23,7 @@ static int gui_thread() {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit()) return 1;
 
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-    const char* glsl_version = "#version 100";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
-#elif defined(__APPLE__)
+#ifdef __APPLE__
     const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
@@ -59,13 +50,11 @@ static int gui_thread() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGuiStyle style;
-    ImGui::StyleColorsDark(&style);
+    ImGui::StyleColorsDark();
     float xscale, yscale;
     glfwGetWindowContentScale(window, &xscale, &yscale);
     float scale = std::max(xscale, yscale);
-    style.ScaleAllSizes(scale);
-    ImGui::GetStyle() = style;
+    ImGui::GetStyle().ScaleAllSizes(scale);
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);

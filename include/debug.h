@@ -8,6 +8,12 @@
 #include <mpv/client.h>
 #include <imgui.h>
 
+// imgui extensions
+namespace ImGui {
+inline ImVec2 EmVec2(float x, float y) { return ImVec2(GetFontSize() * x, GetFontSize() * y); }
+inline float EmSize(float n) { return GetFontSize() * n; }
+}  // namespace ImGui
+
 class Debug {
    public:
     explicit Debug(mpv_handle *mpv);
