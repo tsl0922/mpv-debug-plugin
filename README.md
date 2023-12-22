@@ -1,6 +1,6 @@
 # mpv-debug-plugin
 
-a debug tool for mpv, based on the [C PLUGINS](https://mpv.io/manual/master/#c-plugins) API.
+a debug tool for [mpv](https://mpv.io), based on the [C PLUGINS](https://mpv.io/manual/master/#c-plugins) API.
 
 ![screenshot](screenshot/debug.jpg)
 
@@ -14,9 +14,12 @@ See also [mpv-menu-plugin](https://github.com/tsl0922/mpv-menu-plugin).
 
 ## Installation
 
-[mpv](https://mpv.io) >= `0.37.0` is required, and the `cplugins` feature should be enabled.
+Download the plugin from Releases.
 
-Download the plugin from Releases, and place `debug.dll` in your mpv `scripts` folder.
+- **Windows:** mpv >= `0.37.0` is required, place `debug.dll` in your mpv `scripts` folder
+- **Linux:** mpv >= `0.24.0` is required, place `debug.so` in your mpv `scripts` folder
+
+Check if the `cplugins` feature is compiled into mpv if the plugin is not loaded.
 
 ## Configuration
 
