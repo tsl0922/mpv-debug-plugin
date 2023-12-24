@@ -51,7 +51,7 @@ static int gui_thread() {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    ImGui::StyleColorsDark();
+    ImGui::StyleColorsDracula();
     float xscale, yscale;
     glfwGetWindowContentScale(window, &xscale, &yscale);
     float scale = std::max(xscale, yscale);
