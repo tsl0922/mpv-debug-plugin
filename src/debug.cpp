@@ -412,7 +412,9 @@ void Debug::Console::draw() {
     ImGui::SameLine();
     ImGui::Text("(%d/%d)", Items.Size, LogLimit);
     ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.17f, 0.17f, 0.35, 1.0f});
     if (ImGui::Button("Level")) ImGui::OpenPopup("Log Level");
+    ImGui::PopStyleColor();
     ImGui::Separator();
 
     const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
