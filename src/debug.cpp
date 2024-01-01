@@ -10,15 +10,14 @@
 Debug::Debug(mpv_handle* mpv) {
     this->mpv = mpv;
     console = new Console(mpv);
-    console->init("status", 500);
-    initData();
+    init();
 }
 
 Debug::~Debug() { delete console; }
 
 void Debug::show() {
     m_open = true;
-    initData();
+    init();
 }
 
 void Debug::draw() {
@@ -122,10 +121,23 @@ static void formatCommands(mpv_node& node, std::vector<std::pair<std::string, st
     }
 }
 
-void Debug::initData() {
+void Debug::init() {
     version = mpv_get_property_string(mpv, "mpv-version");
 
     mpv_node node;
+    memset(&node, 0, sizeof(node));
+    if (mpv_get_property(mpv, "msg-level", MPV_FORMAT_NODE, &node) >= 0) {
+        for (int i = 0; i < node.u.list->num; i++) {
+            auto list = node.u.list;
+            if (strcmp(list->keys[i], "all") == 0) {
+                const char* level = list->values[i].u.string;
+                if (console->LogLevel != level) console->init(level, console->LogLimit);
+                break;
+            }
+        }
+        mpv_free_node_contents(&node);
+    }
+
     memset(&node, 0, sizeof(node));
     mpv_get_property(mpv, "options", MPV_FORMAT_NODE, &node);
     options.clear();
@@ -326,6 +338,7 @@ void Debug::AddLog(const char* prefix, const char* level, const char* text) {
 Debug::Console::Console(mpv_handle* mpv) : mpv(mpv) {
     ClearLog();
     memset(InputBuf, 0, sizeof(InputBuf));
+    init("status", 500);
 }
 
 Debug::Console::~Console() {
@@ -370,14 +383,10 @@ void Debug::Console::AddLog(const char* level, const char* fmt, ...) {
 
 ImVec4 Debug::Console::LogColor(const char* level) {
     std::map<std::string, ImVec4> logColors = {
-        {"fatal", ImVec4{0.804f, 0, 0, 1.0f}},
-        {"error", ImVec4{0.804f, 0, 0, 1.0f}},
-        {"warn", ImVec4{0.804f, 0.804f, 0, 1.0f}},
-        {"info", ImGui::GetStyle().Colors[ImGuiCol_Text]},
-        {"status", ImGui::GetStyle().Colors[ImGuiCol_Text]},
-        {"v", ImVec4{0.075f, 0.631f, 0.055f, 1.0f}},
-        {"debug", ImGui::GetStyle().Colors[ImGuiCol_Text]},
-        {"trace", ImGui::GetStyle().Colors[ImGuiCol_Text]},
+        {"fatal", ImVec4{0.804f, 0, 0, 1.0f}},        {"error", ImVec4{0.804f, 0, 0, 1.0f}},
+        {"warn", ImVec4{0.804f, 0.804f, 0, 1.0f}},    {"info", ImVec4{1.0f, 1.0f, 1.0f, 1.0f}},
+        {"status", ImVec4{1.0f, 1.0f, 1.0f, 1.0f}},   {"v", ImVec4{0.075f, 0.631f, 0.055f, 1.0f}},
+        {"debug", ImVec4{0.50f, 0.50f, 0.50f, 1.0f}}, {"trace", ImVec4{0.30f, 0.30f, 0.30f, 1.0f}},
     };
     if (level == nullptr || !logColors.contains(level)) level = "status";
     return logColors[level];

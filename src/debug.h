@@ -56,7 +56,7 @@ class Debug {
         bool AutoScroll = true;
         bool ScrollToBottom = false;
         bool CommandInited = false;
-        std::string LogLevel = "v";
+        std::string LogLevel = "status";
         int LogLimit = 500;
     };
 
@@ -73,7 +73,7 @@ class Debug {
     void drawProperties(const char *title, std::vector<std::string> &props);
     void drawPropNode(const char *name, mpv_node &node, int depth = 0);
 
-    void initData();
+    void init();
 
     mpv_handle *mpv;
     bool m_open = true;
