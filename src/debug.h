@@ -57,7 +57,7 @@ class Debug {
         bool ScrollToBottom = false;
         bool CommandInited = false;
         std::string LogLevel = "status";
-        int LogLimit = 500;
+        int LogLimit = 5000;
     };
 
     struct Binding {

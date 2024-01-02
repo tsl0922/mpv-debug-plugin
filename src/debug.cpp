@@ -338,7 +338,7 @@ void Debug::AddLog(const char* prefix, const char* level, const char* text) {
 Debug::Console::Console(mpv_handle* mpv) : mpv(mpv) {
     ClearLog();
     memset(InputBuf, 0, sizeof(InputBuf));
-    init("status", 500);
+    init("status", 5000);
 }
 
 Debug::Console::~Console() {
@@ -393,28 +393,33 @@ ImVec4 Debug::Console::LogColor(const char* level) {
 }
 
 void Debug::Console::draw() {
-    if (ImGui::BeginPopup("Log Level")) {
-        const char* items[] = {"fatal", "error", "warn", "info", "status", "v", "debug", "trace", "no"};
-        static std::string level = LogLevel;
-        for (int i = 0; i < IM_ARRAYSIZE(items); i++) {
-            if (ImGui::MenuItem(items[i], nullptr, level == items[i])) {
-                level = items[i];
-                init(items[i], LogLimit);
-            }
-        }
-        ImGui::EndPopup();
+    ImGui::TextUnformatted("Lines:");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(ImGui::EmSize(4));
+    if (ImGui::InputInt("##Lines", &LogLimit, 0)) {
+        if (LogLimit <= 0) LogLimit = 5000;
     }
-
-    Filter.Draw(fmt::format("{}##log", "Filter").c_str(), ImGui::EmSize(8));
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(ImGui::EmSize(3));
-    ImGui::InputInt("Lines", &LogLimit, 0);
+    ImGui::TextDisabled("(%d/%d)", Items.Size, LogLimit);
     ImGui::SameLine();
-    ImGui::Text("(%d/%d)", Items.Size, LogLimit);
+    ImGui::TextUnformatted("Level:");
     ImGui::SameLine();
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4{0.17f, 0.17f, 0.35, 1.0f});
-    if (ImGui::Button("Level")) ImGui::OpenPopup("Log Level");
-    ImGui::PopStyleColor();
+    static const char* levels[] = {"fatal", "error", "warn", "info", "status", "v", "debug", "trace", "no"};
+    ImGui::SetNextItemWidth(ImGui::EmSize(6));
+    if (ImGui::BeginCombo("##Level", LogLevel.c_str())) {
+        for (auto& level : levels) {
+            bool selected = LogLevel == level;
+            ImGui::PushStyleColor(ImGuiCol_Text, LogColor(level));
+            if (ImGui::Selectable(level, selected)) init(level, LogLimit);
+            ImGui::PopStyleColor();
+            if (selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+    ImGui::SameLine();
+    ImGui::TextUnformatted("Search:");
+    ImGui::SameLine();
+    Filter.Draw(fmt::format("{}##log", "##Search").c_str(), 0);
     ImGui::Separator();
 
     const float footer_height_to_reserve = ImGui::GetStyle().ItemSpacing.y + ImGui::GetFrameHeightWithSpacing();
