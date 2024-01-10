@@ -61,9 +61,12 @@ class Debug {
     };
 
     struct Binding {
+        std::string section;
         std::string key;
         std::string cmd;
         std::string comment;
+        int64_t priority;
+        bool weak;
     };
 
     void drawHeader();
