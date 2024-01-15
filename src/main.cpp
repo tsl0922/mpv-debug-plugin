@@ -118,6 +118,12 @@ static void show_debug() {
     }
 }
 
+static void handle_property_change(mpv_event* event) {
+    mpv_event_property* prop = (mpv_event_property*)event->data;
+    debug->update(prop);
+    glfwPostEmptyEvent();
+}
+
 static void handle_client_message(mpv_event* event) {
     mpv_event_client_message* msg = (mpv_event_client_message*)event->data;
     if (msg->num_args < 1) return;
@@ -142,6 +148,9 @@ int mpv_open_cplugin(mpv_handle* handle) {
         if (event->event_id == MPV_EVENT_SHUTDOWN) break;
 
         switch (event->event_id) {
+            case MPV_EVENT_PROPERTY_CHANGE:
+                handle_property_change(event);
+                break;
             case MPV_EVENT_CLIENT_MESSAGE:
                 handle_client_message(event);
                 break;

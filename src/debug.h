@@ -22,6 +22,7 @@ class Debug {
     void draw();
     void show();
     void AddLog(const char *prefix, const char *level, const char *text);
+    void update(mpv_event_property *prop);
 
    private:
     struct Console {
@@ -76,13 +77,10 @@ class Debug {
     void drawProperties(const char *title, std::vector<std::string> &props);
     void drawPropNode(const char *name, mpv_node &node, int depth = 0);
 
-    void init();
-
     mpv_handle *mpv;
     bool m_open = true;
     Console *console = nullptr;
     std::string version;
-    std::string m_node = "Console";
     bool m_demo = false;
 
     std::vector<std::string> options;

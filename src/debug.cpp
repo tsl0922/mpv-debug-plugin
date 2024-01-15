@@ -19,15 +19,33 @@ static bool findCase(std::string haystack, std::string needle) {
 Debug::Debug(mpv_handle* mpv) {
     this->mpv = mpv;
     console = new Console(mpv);
-    init();
+    version = mpv_get_property_string(mpv, "mpv-version");
+
+    mpv_node node{0};
+    if (mpv_get_property(mpv, "msg-level", MPV_FORMAT_NODE, &node) >= 0) {
+        for (int i = 0; i < node.u.list->num; i++) {
+            auto list = node.u.list;
+            if (strcmp(list->keys[i], "all") == 0) {
+                const char* level = list->values[i].u.string;
+                if (console->LogLevel != level) console->init(level, console->LogLimit);
+                break;
+            }
+        }
+        mpv_free_node_contents(&node);
+    }
+
+    mpv_observe_property(mpv, 0, "options", MPV_FORMAT_NODE);
+    mpv_observe_property(mpv, 0, "property-list", MPV_FORMAT_NODE);
+    mpv_observe_property(mpv, 0, "command-list", MPV_FORMAT_NODE);
+    mpv_observe_property(mpv, 0, "input-bindings", MPV_FORMAT_NODE);
 }
 
-Debug::~Debug() { delete console; }
-
-void Debug::show() {
-    m_open = true;
-    init();
+Debug::~Debug() {
+    mpv_unobserve_property(mpv, 0);
+    delete console;
 }
+
+void Debug::show() { m_open = true; }
 
 void Debug::draw() {
     if (!m_open) return;
@@ -59,17 +77,12 @@ void Debug::drawHeader() {
 
 void Debug::drawConsole() {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (m_node != "Console") ImGui::SetNextItemOpen(false, ImGuiCond_Always);
-    if (!ImGui::CollapsingHeader("Console")) return;
-    m_node = "Console";
+    if (!ImGui::CollapsingHeader("Console", ImGuiTreeNodeFlags_DefaultOpen)) return;
     console->draw();
 }
 
 void Debug::drawBindings() {
-    if (m_node != "Bindings") ImGui::SetNextItemOpen(false, ImGuiCond_Always);
     if (!ImGui::CollapsingHeader(fmt::format("Bindings [{}]", bindings.size()).c_str())) return;
-    m_node = "Bindings";
-
     static char buf[256] = "";
     ImGui::TextUnformatted("Filter:");
     ImGui::SameLine();
@@ -144,76 +157,50 @@ static void formatCommands(mpv_node& node, std::vector<std::pair<std::string, st
     }
 }
 
-void Debug::init() {
-    version = mpv_get_property_string(mpv, "mpv-version");
+void Debug::update(mpv_event_property* prop) {
+    if (prop->format != MPV_FORMAT_NODE) return;
+    mpv_node* node = (mpv_node*)prop->data;
+    if (node->format != MPV_FORMAT_NODE_ARRAY) return;
 
-    mpv_node node;
-    memset(&node, 0, sizeof(node));
-    if (mpv_get_property(mpv, "msg-level", MPV_FORMAT_NODE, &node) >= 0) {
-        for (int i = 0; i < node.u.list->num; i++) {
-            auto list = node.u.list;
-            if (strcmp(list->keys[i], "all") == 0) {
-                const char* level = list->values[i].u.string;
-                if (console->LogLevel != level) console->init(level, console->LogLimit);
-                break;
+    if (strcmp(prop->name, "options") == 0) {
+        options.clear();
+        for (int i = 0; i < node->u.list->num; i++) options.push_back(node->u.list->values[i].u.string);
+    } else if (strcmp(prop->name, "property-list") == 0) {
+        properties.clear();
+        for (int i = 0; i < node->u.list->num; i++) properties.push_back(node->u.list->values[i].u.string);
+    } else if (strcmp(prop->name, "command-list") == 0) {
+        commands.clear();
+        formatCommands(*node, commands);
+        console->initCommands(commands);
+    } else if (strcmp(prop->name, "input-bindings") == 0) {
+        bindings.clear();
+        for (int i = 0; i < node->u.list->num; i++) {
+            auto item = node->u.list->values[i];
+            Binding binding;
+            for (int j = 0; j < item.u.list->num; j++) {
+                auto key = item.u.list->keys[j];
+                auto value = item.u.list->values[j];
+                if (strcmp(key, "section") == 0) {
+                    binding.section = value.u.string;
+                } else if (strcmp(key, "key") == 0) {
+                    binding.key = value.u.string;
+                } else if (strcmp(key, "cmd") == 0) {
+                    binding.cmd = value.u.string;
+                } else if (strcmp(key, "comment") == 0) {
+                    binding.comment = value.u.string;
+                } else if (strcmp(key, "priority") == 0) {
+                    binding.priority = value.u.int64;
+                } else if (strcmp(key, "is_weak") == 0) {
+                    binding.weak = value.u.flag;
+                }
             }
+            bindings.emplace_back(binding);
         }
-        mpv_free_node_contents(&node);
     }
-
-    memset(&node, 0, sizeof(node));
-    mpv_get_property(mpv, "options", MPV_FORMAT_NODE, &node);
-    options.clear();
-    for (int i = 0; i < node.u.list->num; i++) options.push_back(node.u.list->values[i].u.string);
-    mpv_free_node_contents(&node);
-
-    memset(&node, 0, sizeof(node));
-    mpv_get_property(mpv, "property-list", MPV_FORMAT_NODE, &node);
-    properties.clear();
-    for (int i = 0; i < node.u.list->num; i++) properties.push_back(node.u.list->values[i].u.string);
-    mpv_free_node_contents(&node);
-
-    memset(&node, 0, sizeof(node));
-    mpv_get_property(mpv, "input-bindings", MPV_FORMAT_NODE, &node);
-    bindings.clear();
-    for (int i = 0; i < node.u.list->num; i++) {
-        auto item = node.u.list->values[i];
-        Binding binding;
-        for (int j = 0; j < item.u.list->num; j++) {
-            auto key = item.u.list->keys[j];
-            auto value = item.u.list->values[j];
-            if (strcmp(key, "section") == 0) {
-                binding.section = value.u.string;
-            } else if (strcmp(key, "key") == 0) {
-                binding.key = value.u.string;
-            } else if (strcmp(key, "cmd") == 0) {
-                binding.cmd = value.u.string;
-            } else if (strcmp(key, "comment") == 0) {
-                binding.comment = value.u.string;
-            } else if (strcmp(key, "priority") == 0) {
-                binding.priority = value.u.int64;
-            } else if (strcmp(key, "is_weak") == 0) {
-                binding.weak = value.u.flag;
-            }
-        }
-        bindings.emplace_back(binding);
-    }
-    mpv_free_node_contents(&node);
-
-    memset(&node, 0, sizeof(node));
-    mpv_get_property(mpv, "command-list", MPV_FORMAT_NODE, &node);
-    commands.clear();
-    formatCommands(node, commands);
-    mpv_free_node_contents(&node);
-
-    console->initCommands(commands);
 }
 
 void Debug::drawCommands() {
-    if (m_node != "Commands") ImGui::SetNextItemOpen(false, ImGuiCond_Always);
     if (!ImGui::CollapsingHeader(fmt::format("Commands [{}]", commands.size()).c_str())) return;
-    m_node = "Commands";
-
     static char buf[256] = "";
     ImGui::TextUnformatted("Filter:");
     ImGui::SameLine();
@@ -238,11 +225,7 @@ void Debug::drawCommands() {
 }
 
 void Debug::drawProperties(const char* title, std::vector<std::string>& props) {
-    if (m_node != title) ImGui::SetNextItemOpen(false, ImGuiCond_Always);
-    if (!ImGui::CollapsingHeader(fmt::format("{} [{}]", title, props.size()).c_str())) {
-        return;
-    }
-    m_node = title;
+    if (!ImGui::CollapsingHeader(fmt::format("{} [{}]", title, props.size()).c_str())) return;
 
     int mask = 1 << MPV_FORMAT_NONE | 1 << MPV_FORMAT_STRING | 1 << MPV_FORMAT_OSD_STRING | 1 << MPV_FORMAT_FLAG |
                1 << MPV_FORMAT_INT64 | 1 << MPV_FORMAT_DOUBLE | 1 << MPV_FORMAT_NODE | 1 << MPV_FORMAT_NODE_ARRAY |
