@@ -184,6 +184,7 @@ static void load_config() {
 
     inipp::get_value(ini.sections[""], "font-path", config.fontPath);
     inipp::get_value(ini.sections[""], "font-size", config.fontSize);
+    inipp::get_value(ini.sections[""], "log-lines", config.logLines);
 }
 
 int mpv_open_cplugin(mpv_handle* handle) {
@@ -191,7 +192,7 @@ int mpv_open_cplugin(mpv_handle* handle) {
 
     load_config();
 
-    debug = new Debug(mpv);
+    debug = new Debug(mpv, config.logLines);
 
     while (mpv) {
         mpv_event* event = mpv_wait_event(mpv, -1);
@@ -211,6 +212,8 @@ int mpv_open_cplugin(mpv_handle* handle) {
                 break;
         }
     }
+
+    mpv_unobserve_property(mpv, 0);
 
     if (window) {
         glfwSetWindowShouldClose(window, GLFW_TRUE);

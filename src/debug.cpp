@@ -16,9 +16,8 @@ static bool findCase(std::string haystack, std::string needle) {
     return it != haystack.end();
 }
 
-Debug::Debug(mpv_handle* mpv) {
-    this->mpv = mpv;
-    console = new Console(mpv);
+Debug::Debug(mpv_handle* mpv, int logLines) : mpv(mpv) {
+    console = new Console(mpv, logLines);
     version = mpv_get_property_string(mpv, "mpv-version");
 
     mpv_node node{0};
@@ -41,7 +40,6 @@ Debug::Debug(mpv_handle* mpv) {
 }
 
 Debug::~Debug() {
-    mpv_unobserve_property(mpv, 0);
     delete console;
 }
 
@@ -347,10 +345,10 @@ void Debug::AddLog(const char* prefix, const char* level, const char* text) {
     console->AddLog(level, "[%s] %s", prefix, text);
 }
 
-Debug::Console::Console(mpv_handle* mpv) : mpv(mpv) {
+Debug::Console::Console(mpv_handle* mpv, int logLines) : mpv(mpv) {
     ClearLog();
     memset(InputBuf, 0, sizeof(InputBuf));
-    init("status", 5000);
+    init("status", logLines);
 }
 
 Debug::Console::~Console() {

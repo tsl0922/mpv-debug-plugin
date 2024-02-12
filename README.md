@@ -36,6 +36,7 @@ Add a keybinding to show debug window (required):
 
 - `font-path=<ttf font path>`: use a custom TTF font
 - `font-size=<font size>`: custom font size, default: `13`
+- `log-lines=<lines>`: set the log buffer size, default: `5000`
 
 # Credits
 

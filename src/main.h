@@ -66,6 +66,7 @@ void StyleColorsDracula(ImGuiStyle* dst = nullptr) {
 typedef struct {
     std::string fontPath;
     int fontSize = 13;
+    int logLines = 5000;
 } Config;
 
 extern "C" MPV_EXPORT int mpv_open_cplugin(mpv_handle* handle);

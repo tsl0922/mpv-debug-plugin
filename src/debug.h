@@ -16,7 +16,7 @@ inline float EmSize(float n) { return GetFontSize() * n; }
 
 class Debug {
    public:
-    explicit Debug(mpv_handle *mpv);
+    Debug(mpv_handle *mpv, int logLines);
     ~Debug();
 
     void draw();
@@ -26,7 +26,7 @@ class Debug {
 
    private:
     struct Console {
-        explicit Console(mpv_handle *mpv);
+        Console(mpv_handle *mpv, int logLines);
         ~Console();
 
         void init(const char *level, int limit);
