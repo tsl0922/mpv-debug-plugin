@@ -32,6 +32,11 @@ Add a keybinding to show debug window (required):
 ` script-message-to debug show
 ```
 
+**~~/script-opts/debug.conf**
+
+- `font-path=<ttf font path>`: use a custom TTF font
+- `font-size=<font size>`: custom font size, default: `13`
+
 # Credits
 
 - [fmt](https://fmt.dev): A modern formatting library

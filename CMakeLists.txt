@@ -8,6 +8,7 @@ pkg_search_module(MPV REQUIRED mpv>=0.24.0)
 
 add_subdirectory(third_party/fmt)
 add_subdirectory(third_party/imgui)
+add_subdirectory(third_party/inipp)
 
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 add_library(debug SHARED
@@ -17,7 +18,7 @@ add_library(debug SHARED
 set_property(TARGET debug PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 target_include_directories(debug PRIVATE ${MPV_INCLUDE_DIRS})
-target_link_libraries(debug PRIVATE fmt imgui)
+target_link_libraries(debug PRIVATE fmt imgui inipp)
 target_compile_definitions(debug PRIVATE
     $<$<BOOL:${WIN32}>:MPV_CPLUGIN_DYNAMIC_SYM>
 )

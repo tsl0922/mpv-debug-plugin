@@ -1,24 +1,56 @@
 // Copyright (c) 2023 tsl0922. All rights reserved.
 // SPDX-License-Identifier: GPL-2.0-only
 
+#include <string>
+#include <fstream>
+#include <thread>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <imgui_impl_opengl3_loader.h>
-#include <stdio.h>
-#include <thread>
+#include <fmt/format.h>
+#include <inipp.h>
 #include <GLFW/glfw3.h>
 #include <mpv/client.h>
 #include "debug.h"
 #include "main.h"
 
 std::thread thread;
+static Config config;
 static mpv_handle* mpv = nullptr;
 static GLFWwindow* window = nullptr;
 static Debug* debug = nullptr;
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+static const ImWchar* buildGlyphRanges() {
+    static ImVector<ImWchar> glyphRanges;
+
+    ImFontAtlas* fonts = ImGui::GetIO().Fonts;
+    ImFontGlyphRangesBuilder glyphRangesBuilder;
+
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesChineseFull());
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesJapanese());
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesCyrillic());
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesKorean());
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesThai());
+    glyphRangesBuilder.AddRanges(fonts->GetGlyphRangesVietnamese());
+    glyphRangesBuilder.BuildRanges(&glyphRanges);
+
+    return glyphRanges.Data;
+}
+
+static std::string mp_expand_path(const char* path) {
+    std::string ret = path;
+    mpv_node node{0};
+    const char* args[] = {"expand-path", path, NULL};
+    if (mpv_command_ret(mpv, args, &node) >= 0) {
+        ret = node.u.string;
+        mpv_free_node_contents(&node);
+    }
+    return ret;
 }
 
 static int gui_thread() {
@@ -61,8 +93,13 @@ static int gui_thread() {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     ImFontConfig font_cfg;
-    font_cfg.SizePixels = 13 * scale;
-    io.Fonts->AddFontDefault(&font_cfg);
+    font_cfg.SizePixels = config.fontSize * scale;
+    if (config.fontPath.empty()) {
+        io.Fonts->AddFontDefault(&font_cfg);
+    } else {
+        const ImWchar* unicodeRanges = buildGlyphRanges();
+        io.Fonts->AddFontFromFileTTF(config.fontPath.c_str(), 0, &font_cfg, unicodeRanges);
+    }
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -139,8 +176,21 @@ static void handle_log_message(mpv_event* event) {
     if (window) glfwPostEmptyEvent();
 }
 
+static void load_config() {
+    auto conf = fmt::format("~~/script-opts/{}.conf", mpv_client_name(mpv));
+    std::ifstream file(mp_expand_path(conf.c_str()));
+    inipp::Ini<char> ini;
+    ini.parse(file);
+
+    inipp::get_value(ini.sections[""], "font-path", config.fontPath);
+    inipp::get_value(ini.sections[""], "font-size", config.fontSize);
+}
+
 int mpv_open_cplugin(mpv_handle* handle) {
     mpv = handle;
+
+    load_config();
+
     debug = new Debug(mpv);
 
     while (mpv) {
