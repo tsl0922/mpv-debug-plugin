@@ -4,6 +4,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <memory>
 #include <string>
 #include <mpv/client.h>
 #include <imgui.h>
@@ -80,7 +81,7 @@ class Debug {
     mpv_handle *mpv;
     bool m_open = true;
     Console *console = nullptr;
-    std::string version;
+    std::unique_ptr<char, decltype(mpv_free)> version;
     bool m_demo = false;
 
     std::vector<std::string> options;

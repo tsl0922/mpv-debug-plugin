@@ -16,9 +16,10 @@ static bool findCase(std::string haystack, std::string needle) {
     return it != haystack.end();
 }
 
-Debug::Debug(mpv_handle* mpv, int logLines) : mpv(mpv) {
+Debug::Debug(mpv_handle* mpv, int logLines)
+    : mpv(mpv)
+    , version(mpv_get_property_string(mpv, "mpv-version"), mpv_free) {
     console = new Console(mpv, logLines);
-    version = mpv_get_property_string(mpv, "mpv-version");
 
     mpv_node node{0};
     if (mpv_get_property(mpv, "msg-level", MPV_FORMAT_NODE, &node) >= 0) {
@@ -65,7 +66,7 @@ void Debug::draw() {
 void Debug::drawHeader() {
     ImGuiIO& io = ImGui::GetIO();
     auto style = ImGuiStyle();
-    ImGui::Text("%s", version.c_str());
+    ImGui::Text("%s", version.get());
     auto vSize = ImGui::CalcTextSize(fmt::format("ImGui {}", ImGui::GetVersion()).c_str());
     ImGui::SameLine(ImGui::GetContentRegionAvail().x - vSize.x);
     ImGui::Text("ImGui %s", ImGui::GetVersion());
