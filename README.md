@@ -38,6 +38,8 @@ Add a keybinding to show debug window (required):
 - `font-size=<font size>`: custom font size, default: `13`
 - `log-lines=<lines>`: set the log buffer size, default: `5000`
 
+To change the log level to verbose on start, add `msg-level=all=v` to `mpv.conf`.
+
 # Credits
 
 - [fmt](https://fmt.dev): A modern formatting library
