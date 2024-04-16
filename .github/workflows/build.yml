@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-2019
     name: Windows
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: msys2/setup-msys2@v2
@@ -33,15 +33,15 @@ jobs:
             -DCMAKE_SHARED_LINKER_FLAGS="-static" \
             -G Ninja ..
           cmake --build .
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: debug
+          name: debug.win32
           path: build/debug.dll
   linux:
     runs-on: ubuntu-22.04
     name: Linux
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install dependencies
@@ -55,19 +55,22 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=RELEASE \
             -G Ninja ..
           cmake --build .
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          name: debug
+          name: debug.linux
           path: build/debug.so
   publish:
     needs: [win, linux]
     runs-on: ubuntu-22.04
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v3
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
       - name: Zip files
-        run: zip -r debug.zip debug
+        run: |
+          mkdir debug
+          mv debug.*/debug.* debug/
+          zip -r debug.zip debug
       - uses: rickstaa/action-create-tag@v1
         with:
           tag: dev
