@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <algorithm>
 #include <map>
+#include <vector>
 #include <fmt/format.h>
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -379,19 +380,14 @@ void Debug::Console::ClearLog() {
 void Debug::Console::AddLog(const char* level, const char* fmt, ...) {
     std::va_list args;
     va_start(args, fmt);
-
-    int size;
     std::va_list copy;
     va_copy(copy, args);
-    size = std::vsnprintf(nullptr, 0, fmt, copy);
+    std::vector<char> buf(1 + std::vsnprintf(nullptr, 0, fmt, copy));
     va_end(copy);
-
-    char buf[size + 1];
-    std::vsnprintf(buf, size, fmt, args);
-    buf[size] = '\0';
+    std::vsnprintf(buf.data(), buf.size(), fmt, args);
     va_end(args);
 
-    Items.push_back({ImStrdup(buf), level});
+    Items.push_back({ImStrdup(buf.data()), level});
     if (Items.Size > LogLimit) {
         int offset = Items.Size - LogLimit;
         for (int i = 0; i < offset; i++) free(Items[i].Str);
