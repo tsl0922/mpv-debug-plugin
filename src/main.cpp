@@ -98,7 +98,8 @@ static int gui_thread() {
         io.Fonts->AddFontDefault(&font_cfg);
     } else {
         const ImWchar* unicodeRanges = buildGlyphRanges();
-        io.Fonts->AddFontFromFileTTF(config.fontPath.c_str(), 0, &font_cfg, unicodeRanges);
+        auto fontPath = mp_expand_path(config.fontPath.c_str());
+        io.Fonts->AddFontFromFileTTF(fontPath.c_str(), 0, &font_cfg, unicodeRanges);
     }
 
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
